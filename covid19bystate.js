@@ -81,12 +81,12 @@
 	        description: "Increase in deaths from the day before."
 	    }, {
 	        id: "totalTestResults",
-	        alias: "Total Tests",
+	        alias: "Total Tests (Cumulative)",
 	        dataType: tableau.dataTypeEnum.int,
 	        description: "Calculated value (positive + negative) of total test results."
 	    }, {
 	        id: "totalTestResultsIncrease",
-	        alias: "Pending Tests (Cumulative)",
+	        alias: "Total Tests",
 	        dataType: tableau.dataTypeEnum.int,
 	        description: "Increase in total test results from the day before."
 	    }];
