@@ -92,8 +92,8 @@
 	    }];
 
         var data_tableSchema = {
-	        id: "covid19databystate",
-	        alias: "Covid19 Data by State",
+	        id: "covid_tracking_data_by_state",
+	        alias: "CovidTracking.com - State Data",
             columns: data_cols
         };
 
@@ -135,16 +135,118 @@
 	    }];
 
         var info_tableSchema = {
-	        id: "covid19stateinfo",
-	        alias: "Covid19 State Information",
+	        id: "covid_tracking_state_information",
+	        alias: "CovidTracking.com - State Information",
             columns: info_cols
         };
-        schemaCallback([info_tableSchema, data_tableSchema]);
+
+	    var cdc_cols = [{
+	        id: "data_as_of",
+	        alias: "Data As Of",
+	        dataType: tableau.dataTypeEnum.date,
+	        description: "Date of latest update"
+	    }, {
+	        id: "group",
+	        alias: "Group",
+	        dataType: tableau.dataTypeEnum.string,
+	        description: ""
+	    }, {
+	        id: "indicator",
+	        alias: "Indicator",
+	        dataType: tableau.dataTypeEnum.string,
+	        description: ""
+	    }, {
+	        id: "start_week",
+	        alias: "Start Week",
+	        dataType: tableau.dataTypeEnum.date,
+	        description: "Date where the data starts from."
+	    }, {
+	        id: "end_week",
+	        alias: "End Week",
+	        dataType: tableau.dataTypeEnum.date,
+	        description: "Date through which the data is recorded."
+	   	}, {
+	        id: "covid_deaths",
+	        alias: "All Covid-19 Deaths",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Deaths with confirmed or presumed COVID-19."
+	    }, {
+	        id: "total_deaths",
+	        alias: "Deaths from All Causes",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Deaths received and coded as of the date of analysis, and do not represent all deaths that occurred in that period."
+	    }, {
+	        id: "percent_expected_deaths",
+	        alias: "Percent of Expected Deaths",
+	        dataType: tableau.dataTypeEnum.float,
+	        description: "The number of deaths for all causes for this week in 2020 compared to the average number across the same week in 2017–2019"
+	    }, {
+	        id: "pneumonia_deaths",
+	        alias: "Pneumonia Deaths",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Deaths from Pneumonia excluding deaths involving influenza"
+	    }, {
+	        id: "pneumonia_and_covid_deaths",
+	        alias: "Pneumonia and Covid Deaths",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Pneumonia deaths involving COVID-19."
+	    }, {
+	        id: "all_influenza_deaths_j09_j11",
+	        alias: "Influenza Deaths",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Deaths from Influenza"
+	    }];
+
+        var cdc_tableSchema = {
+	        id: "cdc_provisional_death_counts",
+	        alias: "CDC.gov (US) - Provisional Death Counts",
+            columns: cdc_cols
+        };
+
+	    /*var ecdc_cols = [{
+	        id: "dateRep",
+	        alias: "Date Reported",
+	        dataType: tableau.dataTypeEnum.date
+	    }, {
+	        id: "countriesAndTerritories",
+	        alias: "Country / Territory",
+	        dataType: tableau.dataTypeEnum.string
+	    }, {
+	        id: "geoId",
+	        alias: "Geographic ID",
+	        dataType: tableau.dataTypeEnum.string
+	    }, {
+	        id: "countryterritoryCode",
+	        alias: "Country / Territory Code",
+	        dataType: tableau.dataTypeEnum.string
+	    }, {
+			id: "cases",
+	        alias: "Cases",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Confirmed Covid-19 Cases"
+	    }, {
+	        id: "deaths",
+	        alias: "Deaths",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Deaths from Covid-19"
+	    }, {
+	        id: "popData2018",
+	        alias: "2018 Population",
+	        dataType: tableau.dataTypeEnum.int,
+	        description: "Total Population in 2018"
+	    }];
+
+        var ecdc_tableSchema = {
+	        id: "ecdc_global_cases",
+	        alias: "ECDC - Global Covid-19 Cases",
+            columns: ecdc_cols
+        };*/
+        schemaCallback([data_tableSchema, info_tableSchema, cdc_tableSchema/*, ecdc_tableSchema*/]);
     };
 
     // Download the data
     myConnector.getData = function(table, doneCallback) {
-    	if (table.tableInfo.id == "covid19databystate") {
+    	if (table.tableInfo.id == "covid_tracking_data_by_state") {
 			$.getJSON("https://covidtracking.com/api/v1/states/daily.json", function(resp) {
 				tableData = [];
 
@@ -170,12 +272,10 @@
 						"totalTestResultsIncrease": resp[i].totalTestResultsIncrease
 					});
 				}
-
-
 				table.appendRows(tableData);
 				doneCallback();
 			});
-		} else {
+		} else if (table.tableInfo.id == "covid_tracking_state_information"){
 			$.getJSON("https://covidtracking.com/api/states/info", function(resp) {
 				tableData = [];
 
@@ -195,7 +295,54 @@
 				table.appendRows(tableData);
 				doneCallback();
 			});
-		}
+		} else {
+			$.getJSON("https://data.cdc.gov/resource/hc4f-j6nb.json", function(resp) {
+				tableData = [];
+
+				// Iterate over the JSON object
+				for (var i = 0, len = resp.length; i < len; i++) {
+					tableData.push({
+						"data_as_of": resp[i].data_as_of.substring(0,10),
+						"group": resp[i].group,
+						"indicator": resp[i].indicator,
+						"start_week": resp[i].start_week.substring(0,10),
+						"end_week":resp[i].end_week.substring(0,10),
+						"covid_deaths": resp[i].covid_deaths,
+						"total_deaths": resp[i].total_deaths,
+						"percent_expected_deaths": resp[i].percent_expected_deaths,
+						"pneumonia_deaths": resp[i].pneumonia_deaths,
+						"pneumonia_and_covid_deaths": resp[i].pneumonia_and_covid_deaths,
+						"all_influenza_deaths_j09_j11": resp[i].all_influenza_deaths_j09_j11
+					});
+				}
+
+				table.appendRows(tableData);
+				doneCallback();
+			});
+		} /*else {
+
+			// Using YQL and JSONP
+			$.ajax({
+				url: "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/",
+
+				// The name of the callback parameter, as specified by the YQL service
+				jsonp: "callback",
+
+				// Tell jQuery we're expecting JSONP
+				dataType: "jsonp",
+
+				// Tell YQL what we want and that we want JSON
+				data: {
+					q: "select title,abstract,url from search.news where query=\"cat\"",
+					format: "json"
+				},
+
+				// Work with the response
+				success: function( response ) {
+					console.log( response ); // server response
+				}
+			});
+		}*/
     };
 
     tableau.registerConnector(myConnector);
@@ -203,7 +350,7 @@
     // Create event listeners for when the user submits the form
     $(document).ready(function() {
         $("#submitButton").click(function() {
-            tableau.connectionName = "Covid19 Data by US State Feed"; // This will be the data source name in Tableau
+            tableau.connectionName = "Covid19 Data - NerdyWithData.com WDC"; // This will be the data source name in Tableau
             tableau.submit(); // This sends the connector object to Tableau
         });
     });
